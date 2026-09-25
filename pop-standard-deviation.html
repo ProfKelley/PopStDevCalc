@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Standard Deviation: A Step By Step Guide</title>
+<style>
+/* ---------- tokens ---------- */
+:root{
+  color-scheme: light;
+  --plane:#f9f9f7;
+  --surface:#fcfcfb;
+  --ink:#0b0b0b;
+  --ink-2:#52514e;
+  --muted:#898781;
+  --rule:#e1e0d9;
+  --axis:#c3c2b7;
+  --accent:#2a78d6;
+  --accent-soft:#2a78d61f;
+  --accent-ring:#2a78d64d;
+  --focus:#0b0b0b;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])){
+    color-scheme: dark;
+    --plane:#0d0d0d; --surface:#1a1a19;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --rule:#2c2c2a; --axis:#383835;
+    --accent:#3987e5; --accent-soft:#3987e526; --accent-ring:#3987e559;
+    --focus:#ffffff;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme: dark;
+  --plane:#0d0d0d; --surface:#1a1a19;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --rule:#2c2c2a; --axis:#383835;
+  --accent:#3987e5; --accent-soft:#3987e526; --accent-ring:#3987e559;
+  --focus:#ffffff;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  margin:0;
+  background:var(--plane);
+  color:var(--ink);
+  font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding:0 16px env(safe-area-inset-bottom,0px);
+}
+main{max-width:74rem;margin:0 auto;padding:2rem 0 4rem}
+
+h1{font-size:1.75rem;line-height:1.2;margin:0 0 .5rem}
+h2{font-size:1.1rem;margin:0 0 .6rem;letter-spacing:.01em}
+p{margin:0 0 .75rem}
+.lede{color:var(--ink-2);max-width:52rem}
+.lede.last{margin-bottom:2rem}
+
+.skip{
+  position:absolute;left:-9999px;top:0;background:var(--surface);color:var(--ink);
+  padding:.6rem 1rem;border:2px solid var(--focus);border-radius:6px;z-index:10;
+}
+.skip:focus{left:8px;top:8px}
+
+:where(a,button,input,[tabindex]):focus-visible{
+  outline:3px solid var(--focus); outline-offset:2px; border-radius:4px;
+}
+
+/* ---------- layout ---------- */
+.cols{display:grid;gap:2rem}
+.cols > *{min-width:0}
+@media (min-width:60rem){ .group-1{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:2.5rem} }
+
+/* The second pair sits entirely below the first. The rule between them is pure
+   decoration, so it is a CSS border rather than an HR element: nothing is added
+   to the accessibility tree and no screen reader announces a separator. The H2
+   headings already carry the structure. The border spans the grid, so it is
+   exactly as wide as the two columns above it. */
+.group-2{margin-top:2.25rem;padding-top:2.25rem;border-top:1px solid var(--rule)}
+/* The graph needs more room than the formula and carries a 34rem floor of its
+   own, so this pair waits for a wider viewport than the first pair does. */
+@media (min-width:76rem){
+  .group-2{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:2.5rem}
+  /* Two cards side by side: let both fill the row so the shorter one does not
+     leave a void, and centre the graph inside its own extra height. */
+  .group-2 > section{display:flex;flex-direction:column}
+  .group-2 .card{flex:1}
+  .group-2 figure.card{display:flex;flex-direction:column;justify-content:center}
+  /* One heading wraps to two lines and the other does not, which would start
+     the two cards at different heights. Reserve two lines for both. */
+  .group-2 > section > h2{min-height:3.1em}
+}
+
+.card{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  border-radius:10px;
+  padding:1.1rem 1.15rem 1.25rem;
+}
+
+/* ---------- table ---------- */
+.tscroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:19rem;font-variant-numeric:tabular-nums}
+caption{text-align:left;color:var(--ink-2);font-size:.875rem;margin-bottom:.75rem;line-height:1.45}
+th,td{
+  text-align:right;padding:.5rem .55rem;border-bottom:1px solid var(--rule);
+  transition:background-color .18s ease, box-shadow .18s ease;
+}
+thead th{
+  font-size:.8rem;color:var(--ink-2);font-weight:600;vertical-align:bottom;
+  border-bottom:2px solid var(--axis);line-height:1.3;
+}
+thead th .sub{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+th[scope=row]{text-align:left;font-weight:500}
+tfoot th[scope=row],tfoot td{border-top:2px solid var(--axis);border-bottom:none;font-weight:700;padding-top:.65rem}
+tfoot .note{display:block;font-weight:400;font-size:.75rem;color:var(--muted)}
+td input{
+  width:4.25rem;padding:.3rem .4rem;text-align:right;font:inherit;font-variant-numeric:tabular-nums;
+  color:var(--ink);background:var(--plane);border:1px solid var(--axis);border-radius:5px;
+}
+.editable-note{font-size:.78rem;color:var(--muted);margin:.6rem 0 0}
+
+/* ---------- steps ---------- */
+.steps-intro{color:var(--ink-2);font-size:.9rem;margin-bottom:.9rem;max-width:44rem}
+.controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.controls button{
+  font:inherit;font-size:.9rem;padding:.45rem .9rem;cursor:pointer;
+  background:var(--surface);color:var(--ink);border:1px solid var(--axis);border-radius:6px;
+}
+.controls button:hover:not(:disabled){border-color:var(--ink-2)}
+.controls button:disabled{opacity:.45;cursor:default}
+.controls .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+
+/* A real ordered list: the number a sighted reader sees and the position a
+   screen reader announces now come from the same place, so nothing can drift. */
+ol.steps{margin:0;padding:0 0 0 2.1rem}
+ol.steps li{border-bottom:1px solid var(--rule);padding:.15rem 0}
+ol.steps li:last-child{border-bottom:none}
+ol.steps li::marker{font-weight:700;color:var(--ink-2)}
+li[aria-current="step"]::marker{color:var(--accent)}
+.step-btn{
+  display:block;width:100%;text-align:left;
+  font:inherit;background:none;border:0;padding:.55rem .5rem;cursor:pointer;color:var(--ink);
+  border-radius:6px;
+}
+.step-btn:hover{background:var(--accent-soft)}
+.step-res{margin:0 .5rem .65rem;font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:.9rem}
+.step-res b{color:var(--ink);font-size:1rem}
+.aside{margin:.1rem .5rem .8rem;color:var(--ink-2);font-size:.86rem}
+/* active step: a shape (the inset bar) and weight, not color alone */
+li[aria-current="step"] .step-btn{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+li[aria-current="step"] .step-txt{font-weight:700}
+
+/* ---------- result + chart ---------- */
+.result{
+  margin:1rem 0 0;padding:.95rem 1.1rem;background:var(--surface);
+  border:1px solid var(--rule);border-left:4px solid var(--accent);border-radius:10px;
+}
+.result p{margin:0}
+.result p + p{margin-top:.75rem}
+.r-def{font-weight:600}
+.r-eq{font-size:1.05rem;font-variant-numeric:tabular-nums}
+.r-eq strong{font-size:1.6rem;font-weight:700;line-height:1}
+.r-note{color:var(--ink-2);font-size:.9rem}
+
+figure{margin:0}
+figcaption{color:var(--ink-2);font-size:.85rem;margin-top:.5rem;line-height:1.45}
+#chart{display:block;width:100%;min-width:34rem;height:auto;overflow:visible}
+
+/* ---------- formula ---------- */
+.formula{
+  display:flex;align-items:center;justify-content:center;gap:.3rem;flex-wrap:wrap;
+  font-size:1.4rem;margin:.5rem 0 1.15rem;color:var(--ink);
+  font-family:Georgia,"Times New Roman",serif;
+}
+.sqrt{display:flex;align-items:stretch}
+.sqrt svg{width:.85em;flex:none;align-self:stretch;overflow:visible}
+.radicand{border-top:1.6px solid currentColor;padding:.24em .45em .1em .05em;display:flex;align-items:center}
+.frac{display:flex;flex-direction:column;align-items:stretch;text-align:center;line-height:1.32}
+.frac .num{padding:0 .4em .15em}
+.frac .den{border-top:1.6px solid currentColor;padding:.15em .4em 0}
+.readaloud{color:var(--ink-2)}
+
+/* The moving highlight. Declared last on purpose: it shares specificity with
+   .result, so it has to come later to win the background. Always paired with
+   the active step's own text and its data-where announcement. */
+.lit{background:var(--accent-soft);box-shadow:inset 0 0 0 2px var(--accent-ring)}
+
+.sr-only{
+  position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0;
+}
+footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color:var(--muted);font-size:.82rem}
+
+@media (prefers-reduced-motion:reduce){ *{transition:none!important;animation:none!important} }
+@media (forced-colors:active){
+  .lit{forced-color-adjust:none;background:Highlight;color:HighlightText;box-shadow:none;outline:2px solid CanvasText}
+  li[aria-current="step"] .step-btn{background:Highlight;color:HighlightText}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<main id="main">
+
+  <h1>Standard Deviation: A Step By Step Guide</h1>
+  <p class="lede">The Standard Deviation conveys how widely the scores are spread apart. A value of zero indicates that every score is identical. The larger the standard deviation, the greater the spread of scores. For this example, we'll look at the number of shows watched by four students (in The Numbers section, these values can be changed). We will then go through the six steps for calculating the standard deviation.</p>
+  <p class="lede last">This demonstration consists of four sections: The Six Steps, The Numbers, The Visual Graph, and The Formula for the Population Standard Deviation.</p>
+
+  <div class="cols group-1">
+
+    <!-- ============ THE SIX STEPS ============ -->
+    <section aria-labelledby="h-steps">
+      <h2 id="h-steps">The Six Steps</h2>
+      <p class="steps-intro">Click &lsquo;Walk through it&rsquo;, then &lsquo;Next&rsquo;, to take the steps one at a time. Each step highlights the exact values it produces in The Numbers section, so you can connect what the step says with what it calculates.</p>
+
+      <div class="controls" id="controls">
+        <button type="button" id="prev" disabled>&larr; Back</button>
+        <button type="button" id="next" class="primary">Walk through it &rarr;</button>
+      </div>
+
+      <ol class="steps" id="steps" role="list">
+        <li data-target="value" data-where="Highlighted in the Shows watched column.">
+          <button type="button" class="step-btn"><span class="step-txt">Write down every value.</span></button>
+          <p class="step-res">Values: <b data-out="values">1, 4, 6, 5</b></p>
+        </li>
+        <li data-target="mean" data-where="Highlighted in the Average row, Shows watched column.">
+          <button type="button" class="step-btn"><span class="step-txt">Find the mean.</span></button>
+          <p class="step-res">Mean = <b><i data-out="meanI">4.00</i></b></p>
+        </li>
+        <li data-target="diff" data-where="Highlighted in the Difference score column.">
+          <button type="button" class="step-btn"><span class="step-txt">Subtract the mean from each value.</span></button>
+          <p class="step-res">Difference scores: <b data-outhtml="diffs">(1 &minus; <i>4.00</i>), (4 &minus; <i>4.00</i>), (6 &minus; <i>4.00</i>), (5 &minus; <i>4.00</i>)</b></p>
+        </li>
+        <li data-target="sq" data-where="Highlighted in the Squared column.">
+          <button type="button" class="step-btn"><span class="step-txt">Square each difference score.</span></button>
+          <p class="step-res">Squared difference scores: <b data-out="sqs">9.00, 0.00, 4.00, 1.00</b></p>
+          <p class="aside">The difference scores always add to zero, with the plusses and minuses canceling each other out. By squaring each difference score, this issue is resolved.</p>
+        </li>
+        <li data-target="var" data-where="Highlighted in the Average row, Squared column.">
+          <button type="button" class="step-btn"><span class="step-txt">Calculate the average of the squared difference scores. That is the variance.</span></button>
+          <p class="step-res">Variance = <b data-out="var">3.50</b></p>
+        </li>
+        <li data-target="sd" data-where="Highlighted in the standard deviation box below the table.">
+          <button type="button" class="step-btn"><span class="step-txt">Take the square root of the variance. That is the standard deviation.</span></button>
+          <p class="step-res">Standard deviation = <b data-out="sd">1.87</b></p>
+          <p class="aside">Squaring in step 4 left the variance in &ldquo;squared units&rdquo;. The variance of 10, 20, and 30 is 66.67, which is larger than all of the values. The square root shrinks the answer back down to the original units. The standard deviation of 10, 20, and 30 is 8.16 (much closer to the original values).</p>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ============ THE NUMBERS ============ -->
+    <section aria-labelledby="h-numbers">
+      <h2 id="h-numbers">The Numbers</h2>
+      <div class="card">
+        <div class="tscroll">
+        <table id="calc">
+          <caption>Shows watched by each of four students. A difference score is the value minus the mean; the last column squares it.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Student</th>
+              <th scope="col">Shows watched</th>
+              <th scope="col">Difference score<span class="sub">step 3</span></th>
+              <th scope="col">Squared<span class="sub">step 4</span></th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr>
+              <th scope="row">Chris</th>
+              <td data-cell="value"><input type="number" value="1" min="0" max="20" step="1" inputmode="numeric" aria-label="Shows watched by Chris"></td>
+              <td data-cell="diff">&minus;3.00</td>
+              <td data-cell="sq">9.00</td>
+            </tr>
+            <tr>
+              <th scope="row">Daniel</th>
+              <td data-cell="value"><input type="number" value="4" min="0" max="20" step="1" inputmode="numeric" aria-label="Shows watched by Daniel"></td>
+              <td data-cell="diff">0.00</td>
+              <td data-cell="sq">0.00</td>
+            </tr>
+            <tr>
+              <th scope="row">Fred</th>
+              <td data-cell="value"><input type="number" value="6" min="0" max="20" step="1" inputmode="numeric" aria-label="Shows watched by Fred"></td>
+              <td data-cell="diff">2.00</td>
+              <td data-cell="sq">4.00</td>
+            </tr>
+            <tr>
+              <th scope="row">Doug</th>
+              <td data-cell="value"><input type="number" value="5" min="0" max="20" step="1" inputmode="numeric" aria-label="Shows watched by Doug"></td>
+              <td data-cell="diff">1.00</td>
+              <td data-cell="sq">1.00</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row">Average</th>
+              <td data-cell="mean">4.00<span class="note">the mean</span></td>
+              <td data-cell="diffavg">0.00<span class="note">always zero</span></td>
+              <td data-cell="var">3.50<span class="note">the variance</span></td>
+            </tr>
+          </tfoot>
+        </table>
+        </div>
+        <p class="editable-note">The second column is editable. Everything else recalculates.</p>
+      </div>
+
+      <div class="result" id="result">
+        <p class="r-def">The Standard Deviation = The Square Root of the Variance</p>
+        <p class="r-eq">The Standard Deviation = <span aria-hidden="true">&radic;</span><span class="sr-only">the square root of </span>(<span data-out="var">3.50</span>) = <strong data-out="sd">1.87</strong></p>
+        <p class="r-note">This conveys the typical distance of a student from the mean of <span data-out="mean">4.00</span>.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="cols group-2">
+
+    <!-- ============ THE VISUAL GRAPH ============ -->
+    <section aria-labelledby="h-graph">
+      <h2 id="h-graph">The Visual Graph</h2>
+
+    <figure class="card">
+      <div class="tscroll">
+        <svg id="chart" viewBox="0 0 640 156" role="img" aria-labelledby="chart-t" preserveAspectRatio="xMidYMid meet">
+          <title id="chart-t">Number line showing where the four values sit relative to the mean.</title>
+        </svg>
+      </div>
+      <figcaption id="chart-cap">Each dot is one student; the dashed line is the mean. Try giving all four students the same number &mdash; the spread disappears and the standard deviation becomes 0.</figcaption>
+    </figure>
+  </section>
+
+    <!-- ============ THE FORMULA ============ -->
+    <section aria-labelledby="h-formula">
+      <h2 id="h-formula">The Formula for the Population Standard Deviation</h2>
+    <div class="card">
+      <div class="formula" aria-hidden="true">
+        <span>&sigma;</span><span>=</span>
+        <span class="sqrt">
+          <svg viewBox="0 0 16 44" preserveAspectRatio="none" focusable="false"><path d="M1 26 L5 26 L9 42 L15 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+          <span class="radicand">
+            <span class="frac">
+              <span class="num">&Sigma;(x<sub>i</sub> &minus; &mu;)&sup2;</span>
+              <span class="den">N</span>
+            </span>
+          </span>
+        </span>
+      </div>
+      <p class="readaloud">Mathematically, the formula reads as: sigma equals the square root of the quantity, the sum of open parenthesis x sub i minus mu close parenthesis squared, divided by N.</p>
+      <p>The formula for the population standard deviation is like a baking recipe. It tells us the steps to follow for a successful outcome. The formula uses symbols rather than words, so that it can be written concisely. On the left side of the equal sign is the lowercase sigma, which looks like the letter &lsquo;o&rsquo; with a small tail on its top extending slightly to the right. The lowercase sigma represents the population standard deviation.</p>
+      <p>On the right side of the equal sign are the steps for calculating the population standard deviation. They tell us to subtract the mean from each value, written as &ldquo;x<sub>i</sub> &minus; &mu;&rdquo;. The x sub i represents each value. The &mu; represents the population mean. Next, the formula says, &ldquo;(x<sub>i</sub> &minus; &mu;)&sup2;&rdquo;, telling us to square the difference scores. Then, to the left of those parentheses, sits the uppercase sigma &ldquo;&Sigma;&rdquo;, which tells us to &lsquo;add them all up&rsquo;. All of this sits above a horizontal line, and below is an uppercase N, telling us to divide the sum of the squared difference scores by N (the population size). At this point, we've calculated the variance. Finally, the square root sign encompasses our equation, telling us that sigma (the population standard deviation) equals the square root of the average of the squared difference scores (the variance).</p>
+    </div>
+    </section>
+  </div>
+
+  <footer>Behavioral Statistics &middot; Calculating the Population Standard Deviation. Works with a keyboard, a screen reader, or a mouse; no color is needed to follow it.</footer>
+</main>
+
+<p class="sr-only" role="status" aria-live="polite" id="live"></p>
+
+<script>
+(function(){
+  "use strict";
+
+  var NAMES = ["Chris","Daniel","Fred","Doug"];
+  var MINUS = "−";
+  var rows   = document.querySelectorAll("#rows tr");
+  var inputs = document.querySelectorAll("#rows input");
+  var stepEls= Array.prototype.slice.call(document.querySelectorAll("#steps li"));
+  var live   = document.getElementById("live");
+  var btnPrev= document.getElementById("prev");
+  var btnNext= document.getElementById("next");
+  var chart  = document.getElementById("chart");
+
+  var active = 0;               // 0 = nothing highlighted, 1..6 = a step
+  var started = false;          // "Walk through it" is the first-run label only
+  var speakTimer = null;
+
+  function fmt(n){
+    if (Math.abs(n) < 0.005) n = 0;
+    return (n<0? MINUS : "") + Math.abs(n).toFixed(2);
+  }
+  function say(msg){ live.textContent = ""; window.setTimeout(function(){ live.textContent = msg; }, 60); }
+
+  function readValues(){
+    var out = [];
+    for (var i=0;i<inputs.length;i++){
+      var v = parseFloat(inputs[i].value);
+      if (!isFinite(v)) v = 0;
+      v = Math.max(0, Math.min(20, v));
+      out.push(v);
+    }
+    return out;
+  }
+
+  function stats(v){
+    var n = v.length;
+    var mean = v.reduce(function(a,b){return a+b;},0)/n;
+    var diffs = v.map(function(x){ return x-mean; });
+    var sqs   = diffs.map(function(d){ return d*d; });
+    var vari  = sqs.reduce(function(a,b){return a+b;},0)/n;
+    return { n:n, mean:mean, diffs:diffs, sqs:sqs, vari:vari, sd:Math.sqrt(vari) };
+  }
+
+  function setOut(key, text){
+    var nodes = document.querySelectorAll('[data-out="'+key+'"]');
+    for (var i=0;i<nodes.length;i++) nodes[i].textContent = text;
+  }
+  // only ever fed the numbers built just below -- never user-typed text
+  function setOutHTML(key, html){
+    var nodes = document.querySelectorAll('[data-outhtml="'+key+'"]');
+    for (var i=0;i<nodes.length;i++) nodes[i].innerHTML = html;
+  }
+
+  function render(){
+    var v = readValues(), s = stats(v);
+
+    for (var i=0;i<rows.length;i++){
+      rows[i].querySelector('[data-cell="diff"]').textContent = fmt(s.diffs[i]);
+      rows[i].querySelector('[data-cell="sq"]').textContent   = fmt(s.sqs[i]);
+    }
+    document.querySelector('[data-cell="mean"]').childNodes[0].nodeValue = s.mean.toFixed(2);
+    document.querySelector('[data-cell="diffavg"]').childNodes[0].nodeValue = (0).toFixed(2);
+    document.querySelector('[data-cell="var"]').childNodes[0].nodeValue = s.vari.toFixed(2);
+
+    setOut("values", v.join(", "));
+    setOut("mean",   s.mean.toFixed(2));
+    setOut("meanI",  s.mean.toFixed(2));
+    setOut("sqs",    s.sqs.map(fmt).join(", "));
+    setOut("var",    s.vari.toFixed(2));
+    setOut("sd",     s.sd.toFixed(2));
+
+    // step 3 shows the process, not the answer: (value minus mean), mean italicised
+    setOutHTML("diffs", v.map(function(val){
+      return "(" + val + " " + MINUS + " <i>" + s.mean.toFixed(2) + "</i>)";
+    }).join(", "));
+
+    drawChart(v, s);
+    return s;
+  }
+
+  /* ---------- number line ---------- */
+  function drawChart(v, s){
+    var W=640, L=34, R=34, STACK=19;
+    var hi = Math.max(8, Math.ceil(Math.max.apply(null, v.concat([s.mean+s.sd]))) + 1);
+    var x  = function(val){ return L + (val/hi) * (W-L-R); };
+
+    // how many students share the most-crowded value -- the chart grows to fit
+    var tally = {}, maxStack = 1;
+    for (var q=0;q<v.length;q++){
+      var kk = String(v[q]);
+      tally[kk] = (tally[kk]||0) + 1;
+      if (tally[kk] > maxStack) maxStack = tally[kk];
+    }
+    var headroom = (maxStack-1) * STACK;
+    var baseY = 92 + headroom;      // the axis
+    var H     = baseY + 64;         // room below for ticks and the SD bracket
+    var parts = [];
+
+    function el(tag, attrs, text){
+      var a = [];
+      // the <title> above names the whole graphic; individual labels inside it
+      // would otherwise be announced as a loose run of numbers and names
+      if (tag === "text") attrs["aria-hidden"] = "true";
+      for (var k in attrs) a.push(k+'="'+String(attrs[k]).replace(/"/g,"&quot;")+'"');
+      return "<"+tag+" "+a.join(" ")+(text!=null ? ">"+text+"</"+tag+">" : "/>");
+    }
+
+    // +/- 1 SD band, behind everything
+    var bx1 = x(Math.max(0, s.mean - s.sd)), bx2 = x(Math.min(hi, s.mean + s.sd));
+    var bandTop = baseY - 30 - headroom - 16;
+    parts.push(el("rect",{x:bx1,y:bandTop,width:Math.max(0,bx2-bx1),height:(baseY+6)-bandTop,
+                          fill:"var(--accent-soft)",rx:3}));
+
+    // axis + integer ticks
+    parts.push(el("line",{x1:L,y1:baseY,x2:W-R,y2:baseY,stroke:"var(--axis)","stroke-width":"2"}));
+    for (var t=0;t<=hi;t++){
+      parts.push(el("line",{x1:x(t),y1:baseY,x2:x(t),y2:baseY+5,stroke:"var(--axis)","stroke-width":"1"}));
+      parts.push(el("text",{x:x(t),y:baseY+20,"text-anchor":"middle","font-size":"12.5",fill:"var(--muted)"},String(t)));
+    }
+
+    // mean marker
+    parts.push(el("line",{x1:x(s.mean),y1:26,x2:x(s.mean),y2:baseY+3,
+                          stroke:"var(--ink-2)","stroke-width":"2","stroke-dasharray":"5 3"}));
+    parts.push(el("text",{x:x(s.mean),y:18,"text-anchor":"middle","font-size":"13",
+                          fill:"var(--ink-2)","font-weight":"700"},"mean "+s.mean.toFixed(2)));
+
+    // dots -- stacked upward when students share a value, with ONE shared label above
+    // the stack. A label per dot would be covered by the dot sitting on top of it.
+    var groups = {}, order = [];
+    for (var i=0;i<v.length;i++){
+      var k = String(v[i]);
+      if (!groups[k]) { groups[k] = []; order.push(k); }
+      groups[k].push(NAMES[i]);
+    }
+    for (var g=0; g<order.length; g++){
+      var key = order[g], members = groups[key], cx = x(parseFloat(key)), topCy = baseY - 16;
+      for (var m=0; m<members.length; m++){
+        topCy = baseY - 16 - m*STACK;
+        parts.push(el("circle",{cx:cx,cy:topCy,r:"7.5",fill:"var(--accent)",
+                                stroke:"var(--surface)","stroke-width":"2"}));
+      }
+      parts.push(el("text",{x:cx,y:topCy-13,"text-anchor":"middle","font-size":"13",
+                            fill:"var(--ink-2)"}, members.join(", ")));
+    }
+
+    // extent bracket under the axis -- keeps the SD label clear of the mean label
+    var by = baseY + 34;
+    if (s.sd >= 0.005){
+      parts.push(el("line",{x1:bx1,y1:by-5,x2:bx1,y2:by+5,stroke:"var(--ink-2)","stroke-width":"1.5"}));
+      parts.push(el("line",{x1:bx2,y1:by-5,x2:bx2,y2:by+5,stroke:"var(--ink-2)","stroke-width":"1.5"}));
+      parts.push(el("line",{x1:bx1,y1:by,x2:bx2,y2:by,stroke:"var(--ink-2)","stroke-width":"1.5"}));
+      parts.push(el("text",{x:(bx1+bx2)/2,y:by+20,"text-anchor":"middle","font-size":"12.5",
+                            fill:"var(--ink-2)"},"one standard deviation to either side of the mean"));
+    } else {
+      parts.push(el("text",{x:x(s.mean),y:by+20,"text-anchor":"middle","font-size":"12.5",
+                            fill:"var(--ink-2)"},"every value is the same, so there is no spread"));
+    }
+
+    var lo = (s.mean - s.sd).toFixed(2), up = (s.mean + s.sd).toFixed(2);
+    chart.setAttribute("viewBox","0 0 "+W+" "+H);
+    chart.innerHTML = el("title",{id:"chart-t"}, "Number line from 0 to "+hi+". "
+      + NAMES.map(function(nm,i){ return nm+" at "+v[i]; }).join(", ")
+      + ". The mean is "+s.mean.toFixed(2)
+      + " and the standard deviation is "+s.sd.toFixed(2)+"."
+      + (s.sd < 0.005
+          ? " Every value is the same, so there is no spread."
+          : " Most scores are typically within one standard deviation of the mean ("
+            + lo + " to " + up + "). The value of " + lo
+            + " is one standard deviation below the mean. The value " + up
+            + " is one standard deviation above the mean.")) + parts.join("");
+  }
+
+  /* ---------- stepping ---------- */
+  var TARGETS = { value:'[data-cell="value"]', mean:'[data-cell="mean"]',
+                  diff:'[data-cell="diff"]',  sq:'[data-cell="sq"]',
+                  var:'[data-cell="var"]',    sd:'#result' };
+
+  function clearLit(){
+    var lit = document.querySelectorAll(".lit");
+    for (var i=0;i<lit.length;i++) lit[i].classList.remove("lit");
+  }
+
+  function setStep(n, announce, prefix){
+    active = n;
+    clearLit();
+    for (var i=0;i<stepEls.length;i++) stepEls[i].removeAttribute("aria-current");
+
+    if (n > 0){
+      started = true;
+      var li = stepEls[n-1];
+      li.setAttribute("aria-current","step");
+      var sel = TARGETS[li.getAttribute("data-target")];
+      var hits = document.querySelectorAll(sel);
+      for (var j=0;j<hits.length;j++) hits[j].classList.add("lit");
+      if (announce){
+        var txt   = li.querySelector(".step-txt").textContent;
+        var res   = li.querySelector(".step-res").textContent;
+        var where = li.getAttribute("data-where") || "";
+        var last  = (n === 6) ? " Last step. The button now reads Restart." : "";
+        say((prefix || "") + "Step " + n + " of 6. " + txt + " " + res + " " + where + last);
+      }
+    }
+
+    // One button carries the whole cycle, so it is never disabled:
+    // Walk through it -> Next -> ... -> Restart (which returns to step 1).
+    btnPrev.disabled = (n <= 0);
+    btnNext.textContent = (!started && n === 0) ? "Walk through it →"
+                        : (n >= 6 ? "Restart" : "Next →");
+  }
+
+  btnNext.addEventListener("click", function(){
+    if (active >= 6) setStep(1, true, "Restarted. ");
+    else             setStep(active + 1, true);
+  });
+  btnPrev.addEventListener("click", function(){ if (active > 0) setStep(active-1, true); });
+
+  for (var i=0;i<stepEls.length;i++){
+    (function(idx){
+      stepEls[idx].querySelector(".step-btn").addEventListener("click", function(){
+        setStep(active === idx+1 ? 0 : idx+1, true);
+      });
+    })(i);
+  }
+
+  for (var m=0;m<inputs.length;m++){
+    inputs[m].addEventListener("input", function(){
+      var s = render();
+      if (active > 0) setStep(active, false);
+      window.clearTimeout(speakTimer);
+      speakTimer = window.setTimeout(function(){
+        say("Mean " + s.mean.toFixed(2) + ". Variance " + s.vari.toFixed(2) +
+            ". Standard deviation " + s.sd.toFixed(2) + ".");
+      }, 900);
+    });
+  }
+
+  render();
+  setStep(0, false);
+})();
+</script>
+</body>
+</html>
