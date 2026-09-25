@@ -264,15 +264,15 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
 
       <ol class="steps" id="steps" role="list">
         <li data-target="value" data-where="Highlighted in the Shows watched column.">
-          <button type="button" class="step-btn"><span class="step-txt">Write down every value.</span></button>
-          <p class="step-res">Values: <b data-out="values">1, 4, 6, 5</b></p>
+          <button type="button" class="step-btn"><span class="step-txt">Write down every score.</span></button>
+          <p class="step-res">Scores: <b data-out="values">1, 4, 6, 5</b></p>
         </li>
         <li data-target="mean" data-where="Highlighted in the Average row, Shows watched column.">
-          <button type="button" class="step-btn"><span class="step-txt">Find the population mean.</span></button>
+          <button type="button" class="step-btn"><span class="step-txt">Find the population mean: The &lsquo;center&rsquo; of the population.</span></button>
           <p class="step-res">Mean = <b><i data-out="meanI">4.00</i></b></p>
         </li>
         <li data-target="diff" data-where="Highlighted in the Difference score column.">
-          <button type="button" class="step-btn"><span class="step-txt">Subtract the mean from each value.</span></button>
+          <button type="button" class="step-btn"><span class="step-txt">From each score subtract the mean.</span></button>
           <p class="step-res"><span class="res-label">Difference scores: </span><b data-outhtml="diffs">(1 &minus; <i>4</i>), (4 &minus; <i>4</i>), (6 &minus; <i>4</i>), (5 &minus; <i>4</i>)</b></p>
           <p class="aside">The difference scores always add to zero, with the plusses and minuses canceling each other out.</p>
         </li>
@@ -302,10 +302,10 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
         <div class="tscroll">
         <table id="calc">
           <caption>
-            <p class="cap-lead">Shows watched by each of four students, from 0 to 20. The table is useful for calculating the population variance.</p>
+            <p class="cap-lead">Shows watched by each of four students, from 0 to 20. Explore changing the number of shows watched and notice the impact on the population standard deviation.</p>
             <details>
               <summary>Table Description</summary>
-              <p>This table shows &lsquo;the math&rsquo; for calculating the population standard deviation. Each row lists a student's name, the number of shows watched (ranging from 0 to 20), the difference score (value minus the population mean), and the squared difference score (value minus the population mean, quantity squared). In the bottom row are the averages, presented for the shows watched (the population mean), the difference scores (always zero), and the squared difference scores (the population variance). Explore changing the number of shows watched for a student, and observe the impact on the population standard deviation.</p>
+              <p>This table shows &lsquo;the math&rsquo; for calculating the population standard deviation. Each row lists a student's name, the number of shows watched (ranging from 0 to 20), the difference score (score minus the population mean), and the squared difference score (score minus the population mean, quantity squared). In the bottom row are the averages, presented for the shows watched (the population mean), the difference scores (always zero), and the squared difference scores (the population variance).</p>
             </details>
           </caption>
           <thead>
@@ -373,7 +373,7 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
     <figure class="card">
       <div class="tscroll">
         <svg id="chart" viewBox="0 0 640 156" role="img" aria-labelledby="chart-t" preserveAspectRatio="xMidYMid meet">
-          <title id="chart-t">Number line showing where the four values sit relative to the mean.</title>
+          <title id="chart-t">Number line showing where the four scores sit relative to the mean.</title>
         </svg>
       </div>
       <figcaption id="chart-cap">Each dot is one student; the dashed line is the mean. Try giving all four students the same number &mdash; the spread disappears and the standard deviation becomes 0.</figcaption>
@@ -398,9 +398,9 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
         </span>
       </div>
       <p>On the right side of the equal sign are those same six steps covered previously, written using symbols.</p>
-      <p><b>Step 1:</b> First, notice the &ldquo;x<sub>i</sub>&rdquo;. The x sub i is a lowercase x with a small lowercase i at its bottom right. It will be used to represent each value in our population (<span data-out="values">1, 4, 6, 5</span>).</p>
+      <p><b>Step 1:</b> First, notice the &ldquo;x<sub>i</sub>&rdquo;. The x sub i is a lowercase x with a small lowercase i at its bottom right. It will be used to represent each score in our population (<span data-out="values">1, 4, 6, 5</span>).</p>
       <p><b>Step 2:</b> Notice the &mu;, which looks like a lowercase u with a tail hanging down on its left side. It is the lowercase Greek letter mu, and represents the population mean.</p>
-      <p><b>Step 3:</b> The formula tells us to subtract the mean from the value, written as &ldquo;x<sub>i</sub> &minus; &mu;&rdquo;.</p>
+      <p><b>Step 3:</b> The formula tells us to subtract the mean from the score, written as &ldquo;x<sub>i</sub> &minus; &mu;&rdquo;.</p>
       <p><b>Step 4:</b> Observe the small 2 just outside the parentheses: &ldquo;(x<sub>i</sub> &minus; &mu;)&sup2;&rdquo;. It tells us to square the difference score.</p>
       <p><b>Step 5:</b> To the left of those parentheses sits the uppercase sigma &ldquo;&Sigma;&rdquo;. It looks like a fancy uppercase E, and it tells us to &lsquo;add them all up&rsquo;. So, all of the squared difference scores will be added together.</p>
       <p><b>Step 5, continued:</b> All of this sits above a horizontal line, and below is an uppercase N, telling us to divide the sum of the squared difference scores by N (the population size). At this point, we've calculated the average of the squared difference scores, known as the population variance.</p>
@@ -595,7 +595,7 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
                             fill:"var(--ink-2)"},"one standard deviation to either side of the mean"));
     } else {
       parts.push(el("text",{x:x(s.mean),y:by+20,"text-anchor":"middle","font-size":"12.5",
-                            fill:"var(--ink-2)"},"every value is the same, so there is no spread"));
+                            fill:"var(--ink-2)"},"every score is the same, so there is no spread"));
     }
 
     var lo = (s.mean - s.sd).toFixed(2), up = (s.mean + s.sd).toFixed(2);
@@ -605,9 +605,9 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
       + ". The mean is "+s.mean.toFixed(2)
       + " and the standard deviation is "+s.sd.toFixed(2)+"."
       + (s.sd < 0.005
-          ? " Every value is the same, so there is no spread."
+          ? " Every score is the same, so there is no spread."
           : " Most scores are typically within one standard deviation of the mean ("
-            + lo + " to " + up + "). The value of " + lo
+            + lo + " to " + up + "). The value " + lo
             + " is one standard deviation below the mean. The value " + up
             + " is one standard deviation above the mean.")) + parts.join("");
   }
