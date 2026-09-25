@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Standard Deviation: A Step By Step Guide</title>
+<title>A Guide to the Population Standard Deviation</title>
 <style>
 /* ---------- tokens ---------- */
 :root{
@@ -12,10 +12,13 @@
   --surface:#fcfcfb;
   --ink:#0b0b0b;
   --ink-2:#52514e;
-  --muted:#898781;
+  --muted:#6b6964;
   --rule:#e1e0d9;
   --axis:#c3c2b7;
+  --line:#89887f;
   --accent:#2a78d6;
+  --btn-bg:#2569bd;
+  --btn-fg:#ffffff;
   --accent-soft:#2a78d61f;
   --accent-ring:#2a78d64d;
   --focus:#0b0b0b;
@@ -25,8 +28,9 @@
     color-scheme: dark;
     --plane:#0d0d0d; --surface:#1a1a19;
     --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-    --rule:#2c2c2a; --axis:#383835;
+    --rule:#2c2c2a; --axis:#383835; --line:#706f68;
     --accent:#3987e5; --accent-soft:#3987e526; --accent-ring:#3987e559;
+    --btn-bg:#3987e5; --btn-fg:#0d0d0d;
     --focus:#ffffff;
   }
 }
@@ -34,8 +38,9 @@
   color-scheme: dark;
   --plane:#0d0d0d; --surface:#1a1a19;
   --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-  --rule:#2c2c2a; --axis:#383835;
+  --rule:#2c2c2a; --axis:#383835; --line:#706f68;
   --accent:#3987e5; --accent-soft:#3987e526; --accent-ring:#3987e559;
+  --btn-bg:#3987e5; --btn-fg:#0d0d0d;
   --focus:#ffffff;
 }
 
@@ -76,16 +81,23 @@ p{margin:0 0 .75rem}
    to the accessibility tree and no screen reader announces a separator. The H2
    headings already carry the structure. The border spans the grid, so it is
    exactly as wide as the two columns above it. */
-.group-2{margin-top:2.25rem;padding-top:2.25rem;border-top:1px solid var(--rule)}
+.group-1,.group-2{margin-top:2.25rem;padding-top:2.25rem;border-top:1px solid var(--rule)}
 /* The graph needs more room than the formula and carries a 34rem floor of its
    own, so this pair waits for a wider viewport than the first pair does. */
 @media (min-width:76rem){
-  .group-2{grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:2.5rem}
+  /* The formula card is the taller of the two, so it gets the wider column.
+     The chart track carries its own 34rem floor: below that the number-line
+     labels stop being legible and the SVG would scroll inside its wrapper. */
+  .group-2{grid-template-columns:minmax(37rem,1fr) minmax(0,1fr);gap:2.5rem}
   /* Two cards side by side: let both fill the row so the shorter one does not
      leave a void, and centre the graph inside its own extra height. */
   .group-2 > section{display:flex;flex-direction:column}
   .group-2 .card{flex:1}
-  .group-2 figure.card{display:flex;flex-direction:column;justify-content:center}
+  /* The formula card is far the taller of the two. Letting the chart card
+     stretch to match it left a tall empty box above and below the number
+     line, so the chart card sizes to its own content and the page
+     background fills the rest of the column. */
+  .group-2 figure.card{flex:0 0 auto;display:block}
   /* One heading wraps to two lines and the other does not, which would start
      the two cards at different heights. Reserve two lines for both. */
   .group-2 > section > h2{min-height:3.1em}
@@ -116,20 +128,21 @@ tfoot th[scope=row],tfoot td{border-top:2px solid var(--axis);border-bottom:none
 tfoot .note{display:block;font-weight:400;font-size:.75rem;color:var(--muted)}
 td input{
   width:4.25rem;padding:.3rem .4rem;text-align:right;font:inherit;font-variant-numeric:tabular-nums;
-  color:var(--ink);background:var(--plane);border:1px solid var(--axis);border-radius:5px;
+  color:var(--ink);background:var(--plane);border:1.5px solid var(--accent);border-radius:5px;
+  box-shadow:0 1px 0 var(--accent-soft);
 }
-.editable-note{font-size:.78rem;color:var(--muted);margin:.6rem 0 0}
+td input:hover{border-color:var(--accent);background:var(--accent-soft)}
 
 /* ---------- steps ---------- */
 .steps-intro{color:var(--ink-2);font-size:.9rem;margin-bottom:.9rem;max-width:44rem}
 .controls{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
 .controls button{
   font:inherit;font-size:.9rem;padding:.45rem .9rem;cursor:pointer;
-  background:var(--surface);color:var(--ink);border:1px solid var(--axis);border-radius:6px;
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:6px;
 }
 .controls button:hover:not(:disabled){border-color:var(--ink-2)}
 .controls button:disabled{opacity:.45;cursor:default}
-.controls .primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.controls .primary{background:var(--btn-bg);border-color:var(--btn-bg);color:var(--btn-fg);font-weight:600}
 
 /* A real ordered list: the number a sighted reader sees and the position a
    screen reader announces now come from the same place, so nothing can drift. */
@@ -146,6 +159,7 @@ li[aria-current="step"]::marker{color:var(--accent)}
 .step-btn:hover{background:var(--accent-soft)}
 .step-res{margin:0 .5rem .65rem;font-variant-numeric:tabular-nums;color:var(--ink-2);font-size:.9rem}
 .step-res b{color:var(--ink);font-size:1rem}
+.step-res .res-label{display:block;margin-bottom:.15rem}
 .aside{margin:.1rem .5rem .8rem;color:var(--ink-2);font-size:.86rem}
 /* active step: a shape (the inset bar) and weight, not color alone */
 li[aria-current="step"] .step-btn{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
@@ -158,6 +172,12 @@ li[aria-current="step"] .step-txt{font-weight:700}
 }
 .result p{margin:0}
 .result p + p{margin-top:.75rem}
+/* same treatment as the step labels under the column headings, so the six
+   steps are all labelled where they land */
+.range-note{margin:.6rem 0 0;font-size:.85rem;color:var(--ink-2);
+  border-left:3px solid var(--accent);padding-left:.6rem}
+.r-step{font-weight:400;color:var(--muted);font-size:.78rem}
+.r-step + .r-def{margin-top:.15rem}
 .r-def{font-weight:600}
 .r-eq{font-size:1.05rem;font-variant-numeric:tabular-nums}
 .r-eq strong{font-size:1.6rem;font-weight:700;line-height:1}
@@ -173,13 +193,34 @@ figcaption{color:var(--ink-2);font-size:.85rem;margin-top:.5rem;line-height:1.45
   font-size:1.4rem;margin:.5rem 0 1.15rem;color:var(--ink);
   font-family:Georgia,"Times New Roman",serif;
 }
+.formula-echo{font-size:1.15rem;margin:.55rem 0 .35rem;justify-content:flex-start}
 .sqrt{display:flex;align-items:stretch}
 .sqrt svg{width:.85em;flex:none;align-self:stretch;overflow:visible}
 .radicand{border-top:1.6px solid currentColor;padding:.24em .45em .1em .05em;display:flex;align-items:center}
 .frac{display:flex;flex-direction:column;align-items:stretch;text-align:center;line-height:1.32}
 .frac .num{padding:0 .4em .15em}
 .frac .den{border-top:1.6px solid currentColor;padding:.15em .4em 0}
-.readaloud{color:var(--ink-2)}
+
+/* Disclosures. The marker is a CSS-drawn triangle rather than a glyph, so a
+   screen reader has no stray character to announce; the summary element is
+   already keyboard operable and announced as expandable. */
+details{margin:.1rem .5rem .8rem}
+details > summary{
+  cursor:pointer;list-style:none;display:flex;align-items:center;gap:.45rem;
+  font-size:.86rem;font-weight:600;color:var(--ink-2);padding:.15rem 0;
+}
+details > summary::-webkit-details-marker{display:none}
+details > summary::before{
+  content:"";flex:none;width:0;height:0;
+  border-left:5px solid transparent;border-right:5px solid transparent;
+  border-top:7px solid currentColor;transition:transform .18s ease;
+}
+details[open] > summary::before{transform:rotate(180deg)}
+details > summary:hover{color:var(--ink)}
+details > p{margin:.4rem 0 0;color:var(--ink-2);font-size:.86rem}
+caption .cap-lead{margin:0 0 .35rem}
+caption details{margin:0}
+caption details > p{font-size:.875rem;line-height:1.45}
 
 /* The moving highlight. Declared last on purpose: it shares specificity with
    .result, so it has to come later to win the background. Always paired with
@@ -205,16 +246,16 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
 
 <main id="main">
 
-  <h1>Standard Deviation: A Step By Step Guide</h1>
-  <p class="lede">The Standard Deviation conveys how widely the scores are spread apart. A value of zero indicates that every score is identical. The larger the standard deviation, the greater the spread of scores. For this example, we'll look at the number of shows watched by four students (in The Numbers section, these values can be changed). We will then go through the six steps for calculating the standard deviation.</p>
-  <p class="lede last">This demonstration consists of four sections: The Six Steps, The Numbers, The Visual Graph, and The Formula for the Population Standard Deviation.</p>
+  <h1>A Guide to the Population Standard Deviation</h1>
+  <p class="lede">The population standard deviation conveys how widely the scores in a population are spread apart. The further each score is from the mean, the larger the resulting standard deviation. For this example, we'll look at the number of shows watched by four students (these values can be changed in the table).</p>
+  <p class="lede last">This demonstration consists of four sections: Six Steps for Calculating the Population Standard Deviation, A Table to Organize the Numbers, The Visual Graph, and The Formula for the Population Standard Deviation.</p>
 
   <div class="cols group-1">
 
     <!-- ============ THE SIX STEPS ============ -->
     <section aria-labelledby="h-steps">
-      <h2 id="h-steps">The Six Steps</h2>
-      <p class="steps-intro">Click &lsquo;Walk through it&rsquo;, then &lsquo;Next&rsquo;, to take the steps one at a time. Each step highlights the exact values it produces in The Numbers section, so you can connect what the step says with what it calculates.</p>
+      <h2 id="h-steps">Six Steps for Calculating the Population Standard Deviation</h2>
+      <p class="steps-intro">Click &lsquo;Walk through it&rsquo;, then &lsquo;Next&rsquo;, to take the steps one at a time. Each step highlights the exact values it produces in the table, so you can connect what the step says with what it calculates.</p>
 
       <div class="controls" id="controls">
         <button type="button" id="prev" disabled>&larr; Back</button>
@@ -227,43 +268,52 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
           <p class="step-res">Values: <b data-out="values">1, 4, 6, 5</b></p>
         </li>
         <li data-target="mean" data-where="Highlighted in the Average row, Shows watched column.">
-          <button type="button" class="step-btn"><span class="step-txt">Find the mean.</span></button>
+          <button type="button" class="step-btn"><span class="step-txt">Find the population mean.</span></button>
           <p class="step-res">Mean = <b><i data-out="meanI">4.00</i></b></p>
         </li>
         <li data-target="diff" data-where="Highlighted in the Difference score column.">
           <button type="button" class="step-btn"><span class="step-txt">Subtract the mean from each value.</span></button>
-          <p class="step-res">Difference scores: <b data-outhtml="diffs">(1 &minus; <i>4.00</i>), (4 &minus; <i>4.00</i>), (6 &minus; <i>4.00</i>), (5 &minus; <i>4.00</i>)</b></p>
+          <p class="step-res"><span class="res-label">Difference scores: </span><b data-outhtml="diffs">(1 &minus; <i>4</i>), (4 &minus; <i>4</i>), (6 &minus; <i>4</i>), (5 &minus; <i>4</i>)</b></p>
+          <p class="aside">The difference scores always add to zero, with the plusses and minuses canceling each other out.</p>
         </li>
         <li data-target="sq" data-where="Highlighted in the Squared column.">
           <button type="button" class="step-btn"><span class="step-txt">Square each difference score.</span></button>
-          <p class="step-res">Squared difference scores: <b data-out="sqs">9.00, 0.00, 4.00, 1.00</b></p>
-          <p class="aside">The difference scores always add to zero, with the plusses and minuses canceling each other out. By squaring each difference score, this issue is resolved.</p>
+          <p class="step-res"><span class="res-label">Squared difference scores: </span><b data-outhtml="sqs">(1 &minus; <i>4</i>)&sup2;, (4 &minus; <i>4</i>)&sup2;, (6 &minus; <i>4</i>)&sup2;, (5 &minus; <i>4</i>)&sup2;</b></p>
         </li>
         <li data-target="var" data-where="Highlighted in the Average row, Squared column.">
-          <button type="button" class="step-btn"><span class="step-txt">Calculate the average of the squared difference scores. That is the variance.</span></button>
+          <button type="button" class="step-btn"><span class="step-txt">Calculate the average of the squared difference scores. That is the population variance.</span></button>
           <p class="step-res">Variance = <b data-out="var">3.50</b></p>
         </li>
         <li data-target="sd" data-where="Highlighted in the standard deviation box below the table.">
           <button type="button" class="step-btn"><span class="step-txt">Take the square root of the variance. That is the standard deviation.</span></button>
           <p class="step-res">Standard deviation = <b data-out="sd">1.87</b></p>
-          <p class="aside">Squaring in step 4 left the variance in &ldquo;squared units&rdquo;. The variance of 10, 20, and 30 is 66.67, which is larger than all of the values. The square root shrinks the answer back down to the original units. The standard deviation of 10, 20, and 30 is 8.16 (much closer to the original values).</p>
+          <details>
+            <summary>Why the square root?</summary>
+            <p>Squaring in step 4 left the variance in &ldquo;squared units&rdquo;. For example, the variance of 10, 20, and 30 is 66.67, which is larger than all of the values combined. The square root shrinks the answer back down to the original units. The standard deviation of 10, 20, and 30 is 8.16 (much closer to the original values).</p>
+          </details>
         </li>
       </ol>
     </section>
 
     <!-- ============ THE NUMBERS ============ -->
     <section aria-labelledby="h-numbers">
-      <h2 id="h-numbers">The Numbers</h2>
+      <h2 id="h-numbers">A Table to Organize the Numbers</h2>
       <div class="card">
         <div class="tscroll">
         <table id="calc">
-          <caption>Shows watched by each of four students. A difference score is the value minus the mean; the last column squares it.</caption>
+          <caption>
+            <p class="cap-lead">Shows watched by each of four students, from 0 to 20. The table is useful for calculating the population variance.</p>
+            <details>
+              <summary>Table Description</summary>
+              <p>This table shows &lsquo;the math&rsquo; for calculating the population standard deviation. Each row lists a student's name, the number of shows watched (ranging from 0 to 20), the difference score (value minus the population mean), and the squared difference score (value minus the population mean, quantity squared). In the bottom row are the averages, presented for the shows watched (the population mean), the difference scores (always zero), and the squared difference scores (the population variance). Explore changing the number of shows watched for a student, and observe the impact on the population standard deviation.</p>
+            </details>
+          </caption>
           <thead>
             <tr>
               <th scope="col">Student</th>
-              <th scope="col">Shows watched</th>
-              <th scope="col">Difference score<span class="sub">step 3</span></th>
-              <th scope="col">Squared<span class="sub">step 4</span></th>
+              <th scope="col">Shows watched <span class="sub">steps 1 &amp; 2</span></th>
+              <th scope="col">Difference score <span class="sub">step 3</span></th>
+              <th scope="col">Squared<br>difference score <span class="sub">steps 4 &amp; 5</span></th>
             </tr>
           </thead>
           <tbody id="rows">
@@ -295,20 +345,21 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
           <tfoot>
             <tr>
               <th scope="row">Average</th>
-              <td data-cell="mean">4.00<span class="note">the mean</span></td>
+              <td data-cell="mean">4.00<span class="note">the population mean</span></td>
               <td data-cell="diffavg">0.00<span class="note">always zero</span></td>
-              <td data-cell="var">3.50<span class="note">the variance</span></td>
+              <td data-cell="var">3.50<span class="note">the population variance</span></td>
             </tr>
           </tfoot>
         </table>
         </div>
-        <p class="editable-note">The second column is editable. Everything else recalculates.</p>
       </div>
 
+      <p class="range-note" id="range-note" hidden>Values are limited to 0 through 20.</p>
       <div class="result" id="result">
-        <p class="r-def">The Standard Deviation = The Square Root of the Variance</p>
+        <p class="r-step">step 6</p>
+        <p class="r-def">The Standard Deviation = The Square Root of the Population Variance</p>
         <p class="r-eq">The Standard Deviation = <span aria-hidden="true">&radic;</span><span class="sr-only">the square root of </span>(<span data-out="var">3.50</span>) = <strong data-out="sd">1.87</strong></p>
-        <p class="r-note">This conveys the typical distance of a student from the mean of <span data-out="mean">4.00</span>.</p>
+        <p class="r-note">This conveys the typical distance of a student from the population mean of <span data-out="mean">4.00</span>.</p>
       </div>
     </section>
   </div>
@@ -333,9 +384,10 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
     <section aria-labelledby="h-formula">
       <h2 id="h-formula">The Formula for the Population Standard Deviation</h2>
     <div class="card">
-      <div class="formula" aria-hidden="true">
-        <span>&sigma;</span><span>=</span>
-        <span class="sqrt">
+      <p>The formula for the population standard deviation is like a baking recipe. It tells us the steps to follow for a successful outcome. The formula uses symbols rather than words, so that it can be written concisely. On the left side of the equal sign is the lowercase sigma, which looks like the letter &lsquo;o&rsquo; with a small tail on its top extending slightly to the right. The lowercase sigma represents the population standard deviation.</p>
+      <div class="formula" role="img" aria-label="Sigma equals the square root of the quantity, the sum of open parenthesis x sub i minus mu close parenthesis squared, divided by N.">
+        <span aria-hidden="true">&sigma;</span><span aria-hidden="true">=</span>
+        <span class="sqrt" aria-hidden="true">
           <svg viewBox="0 0 16 44" preserveAspectRatio="none" focusable="false"><path d="M1 26 L5 26 L9 42 L15 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
           <span class="radicand">
             <span class="frac">
@@ -345,9 +397,32 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
           </span>
         </span>
       </div>
-      <p class="readaloud">Mathematically, the formula reads as: sigma equals the square root of the quantity, the sum of open parenthesis x sub i minus mu close parenthesis squared, divided by N.</p>
-      <p>The formula for the population standard deviation is like a baking recipe. It tells us the steps to follow for a successful outcome. The formula uses symbols rather than words, so that it can be written concisely. On the left side of the equal sign is the lowercase sigma, which looks like the letter &lsquo;o&rsquo; with a small tail on its top extending slightly to the right. The lowercase sigma represents the population standard deviation.</p>
-      <p>On the right side of the equal sign are the steps for calculating the population standard deviation. They tell us to subtract the mean from each value, written as &ldquo;x<sub>i</sub> &minus; &mu;&rdquo;. The x sub i represents each value. The &mu; represents the population mean. Next, the formula says, &ldquo;(x<sub>i</sub> &minus; &mu;)&sup2;&rdquo;, telling us to square the difference scores. Then, to the left of those parentheses, sits the uppercase sigma &ldquo;&Sigma;&rdquo;, which tells us to &lsquo;add them all up&rsquo;. All of this sits above a horizontal line, and below is an uppercase N, telling us to divide the sum of the squared difference scores by N (the population size). At this point, we've calculated the variance. Finally, the square root sign encompasses our equation, telling us that sigma (the population standard deviation) equals the square root of the average of the squared difference scores (the variance).</p>
+      <p>On the right side of the equal sign are those same six steps covered previously, written using symbols.</p>
+      <p><b>Step 1:</b> First, notice the &ldquo;x<sub>i</sub>&rdquo;. The x sub i is a lowercase x with a small lowercase i at its bottom right. It will be used to represent each value in our population (<span data-out="values">1, 4, 6, 5</span>).</p>
+      <p><b>Step 2:</b> Notice the &mu;, which looks like a lowercase u with a tail hanging down on its left side. It is the lowercase Greek letter mu, and represents the population mean.</p>
+      <p><b>Step 3:</b> The formula tells us to subtract the mean from the value, written as &ldquo;x<sub>i</sub> &minus; &mu;&rdquo;.</p>
+      <p><b>Step 4:</b> Observe the small 2 just outside the parentheses: &ldquo;(x<sub>i</sub> &minus; &mu;)&sup2;&rdquo;. It tells us to square the difference score.</p>
+      <p><b>Step 5:</b> To the left of those parentheses sits the uppercase sigma &ldquo;&Sigma;&rdquo;. It looks like a fancy uppercase E, and it tells us to &lsquo;add them all up&rsquo;. So, all of the squared difference scores will be added together.</p>
+      <p><b>Step 5, continued:</b> All of this sits above a horizontal line, and below is an uppercase N, telling us to divide the sum of the squared difference scores by N (the population size). At this point, we've calculated the average of the squared difference scores, known as the population variance.</p>
+      <p><b>Step 6:</b> Notice the square root sign, a check mark with a long horizontal arm running off to the right. It encompasses our equation, telling us that the population standard deviation (lowercase sigma) equals the square root of the population variance (the average of the squared difference scores).</p>
+      <details>
+        <summary>How to read the formula aloud</summary>
+        <div class="formula formula-echo" aria-hidden="true">
+          <span>&sigma;</span><span>=</span>
+          <span class="sqrt">
+            <svg viewBox="0 0 16 44" preserveAspectRatio="none" focusable="false"><path d="M1 26 L5 26 L9 42 L15 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/></svg>
+            <span class="radicand">
+              <span class="frac">
+                <span class="num">&Sigma;(x<sub>i</sub> &minus; &mu;)&sup2;</span>
+                <span class="den">N</span>
+              </span>
+            </span>
+          </span>
+        </div>
+        <p>Sigma equals the square root of the quantity, the sum of open parenthesis x sub i minus mu close parenthesis squared, divided by N.</p>
+      </details>
+      <p>This is a conceptual math formula that mirrors the logic presented in the &lsquo;Six Steps for Calculating the Population Standard Deviation&rsquo; section. A computational formula also exists, reaching the same answer by a shortcut that is quicker to work by hand but hides the reasoning.</p>
+      <p style="margin-bottom:0;color:var(--ink-2)">Note, when people simply say &lsquo;sigma&rsquo; they generally mean the lowercase sigma (letter &lsquo;o&rsquo; with the tail at the top right), representing the population standard deviation.</p>
     </div>
     </section>
   </div>
@@ -375,6 +450,8 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
   var started = false;          // "Walk through it" is the first-run label only
   var speakTimer = null;
 
+  function isWhole(n){ return Math.abs(n - Math.round(n)) < 0.005; }
+
   function fmt(n){
     if (Math.abs(n) < 0.005) n = 0;
     return (n<0? MINUS : "") + Math.abs(n).toFixed(2);
@@ -398,7 +475,7 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
     var diffs = v.map(function(x){ return x-mean; });
     var sqs   = diffs.map(function(d){ return d*d; });
     var vari  = sqs.reduce(function(a,b){return a+b;},0)/n;
-    return { n:n, mean:mean, diffs:diffs, sqs:sqs, vari:vari, sd:Math.sqrt(vari) };
+    return { n:n, v:v, mean:mean, diffs:diffs, sqs:sqs, vari:vari, sd:Math.sqrt(vari) };
   }
 
   function setOut(key, text){
@@ -425,14 +502,19 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
     setOut("values", v.join(", "));
     setOut("mean",   s.mean.toFixed(2));
     setOut("meanI",  s.mean.toFixed(2));
-    setOut("sqs",    s.sqs.map(fmt).join(", "));
     setOut("var",    s.vari.toFixed(2));
     setOut("sd",     s.sd.toFixed(2));
 
-    // step 3 shows the process, not the answer: (value minus mean), mean italicised
-    setOutHTML("diffs", v.map(function(val){
-      return "(" + val + " " + MINUS + " <i>" + s.mean.toFixed(2) + "</i>)";
-    }).join(", "));
+    // Steps 3 and 4 show the process rather than the answer. Trailing ".00" is
+    // dropped when every number on show is already whole, so the expressions read
+    // as "(1 - 4)" rather than "(1 - 4.00)".
+    var whole = v.every(isWhole) && isWhole(s.mean);
+    var mu = whole ? String(Math.round(s.mean)) : s.mean.toFixed(2);
+    var expr = v.map(function(val){
+      return "(" + val + " " + MINUS + " <i>" + mu + "</i>)";
+    });
+    setOutHTML("diffs", expr.join(", "));
+    setOutHTML("sqs",   expr.map(function(e){ return e + "&sup2;"; }).join(", "));
 
     drawChart(v, s);
     return s;
@@ -472,9 +554,9 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
                           fill:"var(--accent-soft)",rx:3}));
 
     // axis + integer ticks
-    parts.push(el("line",{x1:L,y1:baseY,x2:W-R,y2:baseY,stroke:"var(--axis)","stroke-width":"2"}));
+    parts.push(el("line",{x1:L,y1:baseY,x2:W-R,y2:baseY,stroke:"var(--line)","stroke-width":"2"}));
     for (var t=0;t<=hi;t++){
-      parts.push(el("line",{x1:x(t),y1:baseY,x2:x(t),y2:baseY+5,stroke:"var(--axis)","stroke-width":"1"}));
+      parts.push(el("line",{x1:x(t),y1:baseY,x2:x(t),y2:baseY+5,stroke:"var(--line)","stroke-width":"1"}));
       parts.push(el("text",{x:x(t),y:baseY+20,"text-anchor":"middle","font-size":"12.5",fill:"var(--muted)"},String(t)));
     }
 
@@ -554,10 +636,16 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
       for (var j=0;j<hits.length;j++) hits[j].classList.add("lit");
       if (announce){
         var txt   = li.querySelector(".step-txt").textContent;
-        var res   = li.querySelector(".step-res").textContent;
+        // the superscript glyph is often silent, which would make steps 3 and 4
+        // sound the same; the announcement says the word instead
+        var res   = li.querySelector(".step-res").textContent.replace(/\u00b2/g, " squared");
         var where = li.getAttribute("data-where") || "";
         var last  = (n === 6) ? " Last step. The button now reads Restart." : "";
-        say((prefix || "") + "Step " + n + " of 6. " + txt + " " + res + " " + where + last);
+        // a collapsed disclosure is not in the accessibility tree, so read its
+        // content out with the step rather than making the listener open it
+        var det   = li.querySelector("details");
+        var extra = det ? " " + det.textContent.replace(/\s+/g, " ").trim() : "";
+        say((prefix || "") + "Step " + n + " of 6. " + txt + " " + res + extra + " " + where + last);
       }
     }
 
@@ -582,16 +670,44 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--rule);color
     })(i);
   }
 
+  var rangeNote = document.getElementById("range-note");
+
   for (var m=0;m<inputs.length;m++){
-    inputs[m].addEventListener("input", function(){
-      var s = render();
-      if (active > 0) setStep(active, false);
-      window.clearTimeout(speakTimer);
-      speakTimer = window.setTimeout(function(){
-        say("Mean " + s.mean.toFixed(2) + ". Variance " + s.vari.toFixed(2) +
-            ". Standard deviation " + s.sd.toFixed(2) + ".");
-      }, 900);
-    });
+    (function(idx){
+      var input = inputs[idx];
+
+      input.addEventListener("input", function(){
+        var s = render();
+        if (active > 0) setStep(active, false);
+        window.clearTimeout(speakTimer);
+        speakTimer = window.setTimeout(function(){
+          // Lead with the value itself. A screen reader announces it reliably on
+          // the spinner arrows but drops characters when a value is typed, so the
+          // page states it either way. Then the chain that one value feeds, in the
+          // same order as the six steps.
+          // If what was typed sits outside 0-20 the calculation uses the limit,
+          // so say why the spoken value differs from what is on screen.
+          var typed = parseFloat(input.value);
+          var out = isFinite(typed) && typed !== s.v[idx];
+          rangeNote.hidden = !out;
+          var capped = out ? " This field accepts 0 through 20." : "";
+          say(NAMES[idx] + ", " + s.v[idx] + "." + capped + " " +
+              "The mean is " + s.mean.toFixed(2) + ". " +
+              "The difference score is " + fmt(s.diffs[idx]) + ". " +
+              "The squared difference score is " + fmt(s.sqs[idx]) + ". " +
+              "The variance is " + s.vari.toFixed(2) + ". " +
+              "The standard deviation is " + s.sd.toFixed(2) + ".");
+        }, 900);
+      });
+
+      // Values outside 0-20 are clamped for the calculation. Snap the field to
+      // match once the edit is finished, so what is shown and what is spoken agree.
+      input.addEventListener("change", function(){
+        var raw = parseFloat(input.value);
+        var fixed = !isFinite(raw) ? 0 : Math.max(0, Math.min(20, raw));
+        if (String(fixed) !== input.value){ input.value = fixed; render(); }
+      });
+    })(m);
   }
 
   render();
